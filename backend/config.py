@@ -13,8 +13,8 @@ ML_MOVIES_CSV = DATA_DIR / "movies.csv"
 
 # Content-based
 TFIDF_MAX_FEATURES = 50_000
-YEAR_MIN = 1980
-YEAR_MAX = 2024
+YEAR_MIN = 1896
+YEAR_MAX = 2031
 
 # Collaborative filtering
 SVD_N_FACTORS    = 50
