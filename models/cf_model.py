@@ -156,3 +156,28 @@ def get_recommendations_by_genre(genres: list[str], n: int = 10) -> tuple[list[d
         for _, row in merged.iterrows()
     ]
     return results, None
+
+def get_cf_scores_for_user(user_id: int) -> tuple[dict[int, float], str | None]:
+    """
+    Return SVD predicted ratings for ALL unwatched movies for a given user.
+    Used by the hybrid model to combine with content scores.
+
+    Returns
+    -------
+    ({movieId: predicted_rating}, None)   on success
+    ({},                          error)  on failure
+    """
+    _ensure_loaded()
+
+    if user_id not in _ratings["userId"].values:
+        return {}, f"User ID {user_id} not found. Choose a value between 1 and 610."
+
+    watched = set(_ratings[_ratings["userId"] == user_id]["movieId"])
+    all_ids = _ratings["movieId"].unique()
+
+    scores = {
+        int(mid): _model.predict(user_id, mid).est
+        for mid in all_ids
+        if mid not in watched
+    }
+    return scores, None

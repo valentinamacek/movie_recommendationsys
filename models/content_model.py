@@ -115,11 +115,11 @@ def get_similar_movies(title: str, n: int = 10) -> tuple[list[dict], str | None]
 
     sim_scores        = linear_kernel(_tfidf_matrix[idx], _tfidf_matrix).flatten()
     sim_scores[idx]   = 0                              # exclude query movie itself
-    top_indices       = sim_scores.argsort()[::-1][:n]
+    safe_n            = min(n, len(sim_scores))
+    top_indices       = sim_scores.argsort()[::-1][:safe_n]
 
-    results = [_row_to_dict(_movies.iloc[i]) for i in top_indices]
+    results = [_row_to_dict(_movies.iloc[i]) for i in top_indices if i < len(_movies)]
     return results, None
-
 
 def get_content_scores(titles: list[str], n: int = 50) -> dict[str, float]:
     """
@@ -151,8 +151,11 @@ def get_content_scores(titles: list[str], n: int = 50) -> dict[str, float]:
         sim = linear_kernel(_tfidf_matrix[idx], _tfidf_matrix).flatten()
         sim[idx] = 0  # zero out exact row
 
-        top_indices = sim.argsort()[::-1][:n]
+        safe_n      = min(n, len(sim))
+        top_indices = sim.argsort()[::-1][:safe_n]
         for i in top_indices:
+            if i >= len(_movies):
+                continue
             row         = _movies.iloc[i]
             movie_title = row["title"]
             # Skip any result whose normalised title matches a seed title
