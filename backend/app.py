@@ -5,11 +5,14 @@ Run with:  python -m backend.app
 """
 
 from flask import Flask
+from backend.routes import bp
 
-def create_app():
+
+def create_app() -> Flask:
     app = Flask(__name__)
-    # TODO: import and register routes blueprint
+    app.register_blueprint(bp)
     return app
+
 
 if __name__ == "__main__":
     app = create_app()
