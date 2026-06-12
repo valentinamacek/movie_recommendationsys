@@ -5,6 +5,9 @@ Run with:  streamlit run frontend/app.py
 """
 
 import streamlit as st
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 st.set_page_config(
     page_title="CineMatch",
@@ -13,8 +16,8 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-from frontend.components.layout import inject_css, render_header
-from frontend.pages import content_based, collaborative, hybrid, about
+from components.layout import inject_css, render_header
+from pages import content_based, collaborative, hybrid, about
 
 inject_css()
 render_header()

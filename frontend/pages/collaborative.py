@@ -9,8 +9,8 @@ Flow:
 """
 
 import streamlit as st
-from frontend.utils import api_post
-from frontend.components.cards import render_cf_card
+from utils import api_post
+from components.cards import render_cf_card
 
 GENRES = [
     "Action", "Adventure", "Animation", "Comedy", "Crime",
