@@ -156,37 +156,51 @@ def get_hybrid_recommendations(
     watched_titles.add(normalise_title(title))
 
     # ── Normalise both signals ─────────────────────────────────────────────────
-    content_norm = _normalise(content_raw)   # keyed by title (str)
+    content_norm = _normalise(content_raw)   # keyed by TMDB title (str)
     cf_norm      = _normalise(cf_raw)        # keyed by movieId (int)
 
-    # ── Build candidate pool — union of both signal sets ─────────────────────
-    # Convert CF movieIds to titles for a unified key space
-    cf_by_title: dict[str, float] = {
-        _id_to_title[mid]: score
-        for mid, score in cf_norm.items()
-        if mid in _id_to_title
-    }
+    # ── Re-key both signals by normalised title for cross-dataset matching ─────
+    # TMDB and MovieLens use slightly different title strings (year suffixes etc.)
+    # Normalising both sides ensures "Dunkirk" matches "Dunkirk (2017)"
+    content_by_norm: dict[str, tuple[str, float]] = {}   # norm -> (original, score)
+    for raw_title, score in content_norm.items():
+        norm = normalise_title(raw_title)
+        if norm not in content_by_norm or score > content_by_norm[norm][1]:
+            content_by_norm[norm] = (raw_title, score)
 
-    all_titles = set(content_norm) | set(cf_by_title)
+    cf_by_norm: dict[str, float] = {}                    # norm -> score
+    cf_norm_to_title: dict[str, str] = {}                # norm -> ML title
+    for mid, score in cf_norm.items():
+        if mid not in _id_to_title:
+            continue
+        ml_title = _id_to_title[mid]
+        norm     = normalise_title(ml_title)
+        if norm not in cf_by_norm or score > cf_by_norm[norm]:
+            cf_by_norm[norm]       = score
+            cf_norm_to_title[norm] = ml_title
 
-    # ── Combine ────────────────────────────────────────────────────────────────
+    # ── Combine on the shared normalised key space ────────────────────────────
+    all_norms = set(content_by_norm) | set(cf_by_norm)
     hybrid: list[dict] = []
 
-    for t in all_titles:
-        if normalise_title(t) in watched_titles:
+    for norm in all_norms:
+        if norm in watched_titles:
             continue
-        
-        # If the title is only in one datasets, the other signal is zero
-        c = content_norm.get(t, 0.0)
-        f = cf_by_title.get(t, 0.0)
 
-        # Only include if at least one signal is non-zero
+        c          = content_by_norm[norm][1] if norm in content_by_norm else 0.0
+        f          = cf_by_norm.get(norm, 0.0)
+        # Use TMDB title if available (richer), else ML title
+        best_title = (
+            content_by_norm[norm][0] if norm in content_by_norm
+            else cf_norm_to_title[norm]
+        )
+
         if c == 0.0 and f == 0.0:
             continue
 
         score = alpha * c + (1 - alpha) * f
         hybrid.append({
-            "title":         t,
+            "title":         best_title,
             "score":         round(score, 4),
             "content_score": round(c, 4),
             "cf_score":      round(f, 4),
