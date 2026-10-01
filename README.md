@@ -12,6 +12,13 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
+## Data
+
+The dataset is not included because of its size (about 150 MB).
+
+1. Download the [TMDB 230000 Movies Dataset](https://www.kaggle.com/datasets/matkardivesh/tmdb-230000-movies-dataset) from Kaggle.
+2. Place the file in the `data/` folder and name it `TMDB_230000_movies.csv`.
+
 ## Run
 
 Open two terminals from the project root, both with the venv activated.
